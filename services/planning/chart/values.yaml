@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/tibaaault/planning
-  tag: ""
+  tag: "dev"
   pullPolicy: IfNotPresent
 
 replicaCount: 2
