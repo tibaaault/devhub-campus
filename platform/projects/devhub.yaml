@@ -27,8 +27,12 @@ spec:
   #   - le cluster local (server: https://kubernetes.default.svc)
   #   - les namespaces commençant par devhub-* (devhub-dev, devhub-preview-*)
   destinations:
-     - server: https://kubernetes.default.svc
-       namespace: devhub-*
+    # On garde l'autorisation pour les environnements de dev et preview
+    - server: https://kubernetes.default.svc
+      namespace: devhub-*
+    # On ajoute l'autorisation pour créer les sous-applications dans argocd
+    - server: https://kubernetes.default.svc
+      namespace: argocd
 
   # TODO : restreignez les ressources cluster-scoped que ce projet peut créer.
   # En l'état, vide = rien d'autorisé. C'est sûr mais ça bloque la création
