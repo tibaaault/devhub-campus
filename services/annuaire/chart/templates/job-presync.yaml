@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "annuaire.fullname" . }}-migration
+  annotations:
+    # C'est cette ligne qui fait la magie :
+    argocd.argoproj.io/hook: PreSync
+    # Pour nettoyer le job une fois qu'il a réussi :
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      containers:
+      - name: migration
+        image: alpine:latest
+        command: ["sh", "-c", "echo 'migration ok' && sleep 5"]
+      restartPolicy: Never
