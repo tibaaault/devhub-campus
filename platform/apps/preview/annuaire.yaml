@@ -24,9 +24,8 @@ spec:
     # Option A — git generator sur les branches feature/* :
     - git:
         repoURL: https://github.com/tibaaault/devhub-campus.git
-        revision: HEAD
-        directories:
-          - path: services/annuaire/chart
+        branches:
+          - feature/*
   template:
     metadata:
       # TODO : le nom doit être unique par génération.
@@ -35,7 +34,7 @@ spec:
       #   - git generator (branches) : {{branch}}, {{branchNormalized}}
       # Le squelette ci-dessous est calibré pour pullRequest generator.
       # Si vous choisissez git, remplacez {{branch_slug}} par {{branchNormalized}}.
-      name: annuaire-preview-{{path.basename}}'
+      name: annuaire-preview-{{branchNormalized}}'
       labels:
         devhub.io/env: preview
         devhub.io/service: annuaire
@@ -50,11 +49,13 @@ spec:
             - values-preview.yaml
           # TODO : surchargez ingress.host pour que chaque preview ait son hôte
           # propre. Indice : `parameters` permet de surcharger une value à la volée.
-          parameters: []
+          parameters:
+            - name: ingress.host
+              value: '{{branchNormalized}}.devhub.local'
       destination:
         server: https://kubernetes.default.svc
         # TODO : le namespace doit être unique par preview.
-        namespace: 'devhub-preview-{{path.basename}}'
+        namespace: 'devhub-preview-{{branchNormalized}}'
       syncPolicy:
         automated:
           prune: true       # IMPORTANT : indispensable pour nettoyer les previews
