@@ -11,23 +11,28 @@ global:
 
 configs:
   params:
-    # désactive le TLS interne — l'ingress-nginx est devant pour le HTTPS.
     server.insecure: true
   cm:
-    # TODO étape 9 : activer les notifications / l'OIDC / des comptes locaux.
-    # Pour l'étape 5, vous n'avez rien à ajouter ici.
-    timeout.reconciliation: 180s
-    # TODO étape 9 : ajouter des `accounts.<user>: login, apiKey` pour
-    # créer un compte non-admin destiné aux tests RBAC.
+    # On active un compte local nommé "thibault" (ou ce que tu veux)
+    accounts.thibault: login
+  
+  rbac:
+    # La politique de droits (Policy)
+    policy.csv: |
+      # Le rôle platform-admin a tous les droits (*)
+      p, role:platform-admin, applications, *, */*, allow
+      p, role:platform-admin, clusters, *, *, allow
+      p, role:platform-admin, projects, *, *, allow
+      p, role:platform-admin, repositories, *, *, allow
 
-  # TODO étape 9 : ajouter le RBAC ArgoCD ici.
-  # Référence : https://argo-cd.readthedocs.io/en/stable/operator-manual/rbac/
-  # rbac:
-  #   policy.default: ""
-  #   policy.csv: |
-  #     # TODO : un rôle developer + binding du compte créé ci-dessus
-  #     p, role:developer, applications, get, devhub/*, allow
-  #     # TODO : compléter pour autoriser le sync uniquement sur ses Apps
+      # Le rôle developer peut "get" (voir) les applications du projet devhub
+      p, role:developer, applications, get, devhub/*, allow
+      # Le rôle developer peut "sync" UNIQUEMENT les apps qui contiennent "annuaire" (grâce au joker *)
+      p, role:developer, applications, sync, devhub/*annuaire*, allow
+
+      # On assigne les rôles aux utilisateurs
+      g, admin, role:platform-admin
+      g, thibault, role:developer
 
 server:
   ingress:
@@ -56,3 +61,29 @@ repoServer:
   resources:
     requests: { cpu: "50m", memory: "128Mi" }
     limits:   { cpu: "500m", memory: "512Mi" }
+
+notifications:
+  enabled: true
+  notifiers:
+    webhook.my-webhook: |
+      url: https://webhook.site/69e5ed9d-6f89-4043-9471-51bf6636f910
+      headers:
+      - name: Content-Type
+        value: application/json
+  templates:
+    template.webhook-sync-failed: |
+      webhook:
+        my-webhook:
+          method: POST
+          body: |
+            {
+              "app": "{{.app.metadata.name}}",
+              "revision": "{{.app.status.sync.revision}}",
+              "error": "{{.app.status.operationState.message}}"
+            }
+  triggers:
+    trigger.on-sync-failed: |
+      - description: Application syncing has failed
+        send:
+        - webhook-sync-failed
+        when: app.status.operationState != nil and app.status.operationState.phase in ['Error', 'Failed']
