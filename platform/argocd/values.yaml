@@ -45,17 +45,13 @@ server:
       nginx.ingress.kubernetes.io/backend-protocol: HTTP
     tls: false
 
-# TODO étape 9 (défi) : activer la sous-chart notifications et
-# brancher un webhook qui envoie un message à chaque sync échouée.
-# notifications:
-#   enabled: true
-#   ...
-
 # Garde-fou ressources — utile en TP pour ne pas saturer la machine.
 controller:
   resources:
     requests: { cpu: "50m", memory: "256Mi" }
     limits:   { cpu: "1",   memory: "1Gi" }
+  metrics:
+    enabled: true
 
 repoServer:
   resources:
